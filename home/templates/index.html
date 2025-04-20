@@ -1,0 +1,78 @@
+{% extends 'base.html' %} {% block start %}
+
+<div
+  class="container d-flex justify-content-center align-items-center"
+  style="min-height: 100vh"
+>
+  <div class="col-md-4 text-center">
+    <form method="POST">
+      {% comment %} email {% endcomment %} {% csrf_token %}
+
+      <div class="mb-3 text-start">
+        <label class="form-label">User Name</label>
+        <input
+          type="text"
+          name="username"
+          class="form-control"
+          style="border: 2px solid #ced4da; border-radius: 8px"
+        />
+      </div>
+
+      <div class="mb-3 text-start">
+        <label class="form-label">Email address</label>
+        <input
+          type="email"
+          class="form-control"
+          name="email"
+          style="border: 2px solid #ced4da; border-radius: 8px"
+        />
+        {% comment %} password{% endcomment %}
+      </div>
+
+      <!-- Add Department Dropdown -->
+      <div class="mb-3 text-start">
+        <label class="form-label">Department</label>
+        <select
+          name="department"
+          class="form-control"
+          style="border: 2px solid #ced4da; border-radius: 8px"
+        >
+          <option value="">Select Department</option>
+          {% for dept in departments %}
+          <option value="{{ dept.department_id }}">
+            {{ dept.department_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-3 text-start">
+        <label class="form-label">Password</label>
+        <input
+          type="password"
+          class="form-control"
+          name="password"
+          style="border: 2px solid #ced4da; border-radius: 8px"
+        />
+      </div>
+
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    {% comment %} show the get data in the ui {% endcomment %} {{ customers }}
+    {% for customer in customers%}
+    <div class="customer-record text-start">
+      <p>Customer_id {{customer.customer_id}}</p>
+      <p>Name {{customer.name}}</p>
+      <p>Email {{customer.email}}</p>
+      p>Department: {{customer.department.department_name}}</p>
+      <p>Password {{customer.password}}</p>
+      <hr>
+    </div>
+
+    {% empty %}
+    <p>No customer found</p>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
