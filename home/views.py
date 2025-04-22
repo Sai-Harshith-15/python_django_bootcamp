@@ -1,47 +1,106 @@
-from django.shortcuts import render, redirect
+from django.views.generic import ListView, DetailView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from django.contrib import messages
+from django.http import JsonResponse
+from .services import CustomerService, DepartmentService
 from .models import CustomerModel, DepartmentModel
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-# Create your views here.
+from django.shortcuts import render, redirect
 
-def index(request):
-    context = {
-        'customers': CustomerModel.objects.all(),
-        'departments': DepartmentModel.objects.all(),
-    }
-    if request.method == "POST":
-      name = request.POST.get('username')
-      email = request.POST.get('email')
-      password = request.POST.get('password')
-      department_id = request.POST.get('department')
-      
-      # Get department instance
-      department = DepartmentModel.objects.get(department_id=department_id)
-      
-      customer = CustomerModel(name=name, email=email, password=password, department=department)
-      customer.save()
-      return HttpResponse("Customer Created Successfully")
+class CustomerListView(ListView):
+    template_name = 'index.html'
+    context_object_name = 'customers'
+    # model = CustomerModel
     
-    # if request.method == "GET":
-    #   customer_id = request.GET.get('customer_id')
-    #   customer = CustomerModel.objects.get(customer_id=customer_id)
-    #   context['customer'] = customer
-    #   return HttpResponse("Customer Retrieved Successfully")
-    # if request.method == "PUT":
-    #   customer_id = request.GET.get('customer_id')
-    #   customer = CustomerModel.objects.get(customer_id=customer_id)
-    #   name = request.POST.get('username')
-    #   email = request.POST.get('email')
-    #   password = request.POST.get('password')
-    #   customer.name = name
-    #   customer.email = email
-    #   customer.password = password
-    #   customer.save()
-    #   return HttpResponse("Customer Updated Successfully")
-    # if request.method == "DELETE":
-    #   customer_id = request.GET.get('customer_id')
-    #   customer = CustomerModel.objects.get(customer_id=customer_id)
-    #   customer.delete()
-    #   return HttpResponse("Customer Deleted Successfully")
+    def get_queryset(self):
+        return CustomerModel.objects.all()
     
-    return render(request, 'index.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            context['customers'] = CustomerService.get_all_customers()
+            context['departments'] = DepartmentService.get_all_departments()
+            return context
+        except Exception as e:
+            messages.error(self.request, str(e))
+            return context
+
+class CustomerDetailView(DetailView):
+    template_name = 'customer_detail.html'
+    context_object_name = 'customer'
+    
+    def get_object(self):
+        customer_id = self.kwargs.get('pk')
+        return CustomerService.get_customer_by_id(customer_id)
+
+class CustomerCreateView(CreateView):
+    template_name = 'customer_form.html'
+    success_url = reverse_lazy('customer-list')
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = {
+                'name': request.POST.get('username'),
+                'email': request.POST.get('email'),
+                'password': request.POST.get('password'),
+                'department_id': request.POST.get('department')
+            }
+            CustomerService.create_customer(data)
+            messages.success(request, 'Customer created successfully')
+            return redirect(self.success_url)
+        except Exception as e:
+            messages.error(request, str(e))
+            return render(request, self.template_name, {'departments': DepartmentService.get_all_departments()})
+
+
+class CustomerUpdateView(UpdateView):
+    template_name = 'customer_form.html'
+    success_url = reverse_lazy('customer-list')
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            customer = CustomerService.get_customer_by_id(kwargs.get('pk'))
+            context = {
+                'customer': customer,
+                'departments': DepartmentService.get_all_departments()
+            }
+            return render(request, self.template_name, context)
+        except Exception as e:
+            messages.error(request, str(e))
+            return redirect('customer-list')
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = {
+                'name': request.POST.get('username'),
+                'email': request.POST.get('email'),
+                'password': request.POST.get('password'),
+                'department_id': request.POST.get('department')
+            }
+            CustomerService.update_customer(kwargs.get('pk'), data)
+            messages.success(request, 'Customer updated successfully')
+            return redirect(self.success_url)
+        except Exception as e:
+            messages.error(request, str(e))
+            return redirect('customer-list')
+
+class CustomerDeleteView(DeleteView):
+    template_name = 'customer_confirm_delete.html'
+    success_url = reverse_lazy('customer-list')
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            customer = CustomerService.get_customer_by_id(kwargs.get('pk'))
+            return render(request, self.template_name, {'customer': customer})
+        except Exception as e:
+            messages.error(request, str(e))
+            return redirect('customer-list')
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            CustomerService.delete_customer(kwargs.get('pk'))
+            messages.success(request, 'Customer deleted successfully')
+            return redirect(self.success_url)
+        except Exception as e:
+            messages.error(request, str(e))
+            return redirect('customer-list')

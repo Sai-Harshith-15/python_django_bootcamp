@@ -1,0 +1,27 @@
+{% extends 'base.html' %} {% block start %}
+
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-6 mx-auto text-center">
+      <div class="card">
+        <div class="card-header bg-danger text-white">
+          <h3 class="card-title mb-0">Delete Customer</h3>
+        </div>
+        <div class="card-body">
+          <p class="lead">
+            Are you sure you want to delete customer "{{ customer.name }}"?
+          </p>
+          <form method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Confirm Delete</button>
+            <a href="{% url 'customer-list' %}" class="btn btn-secondary"
+              >Cancel</a
+            >
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
