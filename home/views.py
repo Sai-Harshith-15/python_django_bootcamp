@@ -33,6 +33,7 @@ class CustomerDetailView(DetailView):
         customer_id = self.kwargs.get('pk')
         return CustomerService.get_customer_by_id(customer_id)
 
+
 class CustomerCreateView(CreateView):
     template_name = 'customer_form.html'
     success_url = reverse_lazy('customer-list')
